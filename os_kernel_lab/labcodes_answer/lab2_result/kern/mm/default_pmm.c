@@ -100,7 +100,7 @@ free_area_t free_area;
 
 static void
 default_init(void) {
-    list_init(&free_list);
+    list_init(&free_list);//初始化链表
     nr_free = 0;
 }
 
