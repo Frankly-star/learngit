@@ -122,12 +122,12 @@ default_init_memmap(struct Page *base, size_t n) {
 static struct Page *
 default_alloc_pages(size_t n) {
     assert(n > 0);
-    if (n > nr_free) {
+    if (n > nr_free) {//如果要申请的块比存在的所有都大则返回
         return NULL;
     }
     struct Page *page = NULL;
     list_entry_t *le = &free_list;
-    // TODO: optimize (next-fit)
+    // 找到第一个合适的块，firstfit
     while ((le = list_next(le)) != &free_list) {
         struct Page *p = le2page(le, page_link);
         if (p->property >= n) {
@@ -154,7 +154,7 @@ default_free_pages(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
     for (; p != base + n; p ++) {
-        assert(!PageReserved(p) && !PageProperty(p));
+        assert(!PageReserved(p) && !PageProperty(p));//判断是否被保留，被使用
         p->flags = 0;
         set_page_ref(p, 0);
     }
@@ -164,7 +164,7 @@ default_free_pages(struct Page *base, size_t n) {
     while (le != &free_list) {
         p = le2page(le, page_link);
         le = list_next(le);
-        // TODO: optimize
+        // 可以插入的地方是头或者尾
         if (base + base->property == p) {
             base->property += p->property;
             ClearPageProperty(p);
