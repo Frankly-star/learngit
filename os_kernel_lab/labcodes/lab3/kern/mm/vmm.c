@@ -338,12 +338,12 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
      * THEN
      *    continue process
      */
-    uint32_t perm = PTE_U;
+    uint32_t perm = PTE_U;//user态
     if (vma->vm_flags & VM_WRITE) {
         perm |= PTE_W;
-    }
+    }//可写USER态
     addr = ROUNDDOWN(addr, PGSIZE);
-
+    //四舍五入pgnumber
     ret = -E_NO_MEM;
 
     pte_t *ptep=NULL;
@@ -364,11 +364,15 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
     *   mm->pgdir : the PDT of these vma
     *
     */
-#if 0
     /*LAB3 EXERCISE 1: YOUR CODE*/
-    ptep = ???              //(1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
-    if (*ptep == 0) {
-                            //(2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
+    ptep = get_pte(mm->pgdir, addr, 1);
+    if(ptep==NULL) goto failed;
+                  //(1) try to find a pte, if pte's PT(Page Table) isn't existed, then create a PT.
+    if (*ptep == 0) {//(2) if the phy addr isn't exist, then alloc a page & map the phy addr with logical addr
+        if(pgdir_alloc_page(mm->pgdir, addr, perm)==NULL)
+        {
+            goto failed;
+        }
 
     }
     else {
@@ -387,15 +391,24 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
             struct Page *page=NULL;
                                     //(1）According to the mm AND addr, try to load the content of right disk page
                                     //    into the memory which page managed.
-                                    //(2) According to the mm, addr AND page, setup the map of phy addr <---> logical addr
-                                    //(3) make the page swappable.
+            if ((ret = swap_in(mm, addr, &page)) != 0) {
+                // swap_in返回值不为0，表示换入失败
+                cprintf("do_pgfault：swap_in failed\n");
+                goto failed;
+            }   
+
+            //(2) According to the mm, addr AND page, setup the map of phy addr <---> logical addr
+            page_insert(mm->pgdir, page, addr, perm);
+             //(3) make the page swappable.
+            swap_map_swappable(mm, addr, page, 1);
+            page->pra_vaddr = addr;            
+
         }
         else {
             cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
             goto failed;
         }
    }
-#endif
    ret = 0;
 failed:
     return ret;
