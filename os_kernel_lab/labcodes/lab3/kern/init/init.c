@@ -8,11 +8,7 @@
 #include <clock.h>
 #include <intr.h>
 #include <pmm.h>
-#include <vmm.h>
-#include <ide.h>
-#include <swap.h>
 #include <kmonitor.h>
-
 int kern_init(void) __attribute__((noreturn));
 void grade_backtrace(void);
 static void lab1_switch_test(void);
@@ -35,11 +31,6 @@ kern_init(void) {
 
     pic_init();                 // init interrupt controller
     idt_init();                 // init interrupt descriptor table
-
-    vmm_init();                 // init virtual memory management
-
-    ide_init();                 // init ide devices
-    swap_init();                // init swap
 
     clock_init();               // init clock interrupt
     intr_enable();              // enable irq interrupt
