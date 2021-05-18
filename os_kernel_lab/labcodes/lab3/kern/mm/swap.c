@@ -204,7 +204,7 @@ check_swap(void)
      assert(vma != NULL);
 
      insert_vma_struct(mm, vma);
-
+     //调用mm_create建立mm变量，并调用vma_create创建vma变量
      //setup the temp Page Table vaddr 0~4MB
      cprintf("setup Page Table for vaddr 0X1000, so alloc a page\n");
      pte_t *temp_ptep=NULL;
@@ -220,7 +220,6 @@ check_swap(void)
      list_entry_t free_list_store = free_list;
      list_init(&free_list);
      assert(list_empty(&free_list));
-     
      //assert(alloc_page() == NULL);
      
      unsigned int nr_free_store = nr_free;
@@ -231,8 +230,8 @@ check_swap(void)
      assert(nr_free==CHECK_VALID_PHY_PAGE_NUM);
      
      cprintf("set up init env for check_swap begin!\n");
+     //调用free_page等操作，模拟形成一个只有4个空闲 physical page；并设置了从4KB~24KB的连续5个虚拟页的访问操作；
      //setup initial vir_page<->phy_page environment for page relpacement algorithm 
-
      
      pgfault_num=0;
      
@@ -250,6 +249,10 @@ check_swap(void)
          assert((*check_ptep[i] & PTE_P));          
      }
      cprintf("set up init env for check_swap over!\n");
+     /*设置记录缺页次数的变量pgfault_num=0，执行check_content_set函数，
+     使得起始地址分别对起始地址为0x1000, 0x2000, 0x3000, 0x4000的虚拟页按时间顺序先后写操作访问，
+     由于之前没有建立页表，所以会产生page fault异常，如果完成练习1，
+     则这些从4KB~20KB的4虚拟页会与ucore保存的4个物理页帧建立映射关系；*/
      // now access the virt pages to test  page relpacement algorithm 
      ret=check_content_access();
      assert(ret==0);
@@ -258,7 +261,6 @@ check_swap(void)
      for (i=0;i<CHECK_VALID_PHY_PAGE_NUM;i++) {
          free_pages(check_rp[i],1);
      } 
-
      //free_page(pte2page(*temp_ptep));
      
      mm_destroy(mm);
