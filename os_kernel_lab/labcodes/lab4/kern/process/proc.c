@@ -103,7 +103,7 @@ alloc_proc(void) {
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
     proc->state = PROC_UNINIT;
-    proc->pid = 0;
+    proc->pid = -1;
     proc->runs = 0;
     proc->kstack = 0;
     proc->need_resched = 0;
